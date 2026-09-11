@@ -1,0 +1,15 @@
+{
+  "name": "campus-day",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/calendar.test.cjs",
+    "test:ui": "node tests/ui.test.cjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "playwright": "1.58.2",
+    "prettier": "3.6.2"
+  }
+}
