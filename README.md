@@ -2,7 +2,7 @@
 
 An offline Android timetable for university life. Import an `.ics` calendar, see what comes next, and keep rooms and course details close at hand.
 
-Designed around the Samsung Galaxy S24's compact screen, with responsive layouts for other Android phones. Independent project; not affiliated with or endorsed by the University of Calgary.
+Independent project; not affiliated with or endorsed by the University of Calgary.
 
 <p align="center">
   <img src="docs/images/daily.png" width="240" alt="Daily agenda with fictional computing and design classes">
