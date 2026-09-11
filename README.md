@@ -8,7 +8,6 @@ Independent project; not affiliated with or endorsed by the University of Calgar
   <img src="docs/images/daily.png" width="240" alt="Daily agenda with fictional computing and design classes">
   <img src="docs/images/subject.png" width="240" alt="Subject details with an example instructor and rooms">
   <img src="docs/images/appearance.png" width="240" alt="Appearance settings with five accent colors">
-  <img src="docs/images/holiday.png" width="240" alt="Named holiday card for the National Day for Truth and Reconciliation">
 </p>
 
 _Screenshots show the actual interface in a mobile browser test, using fictional data from [demo.ics](examples/demo.ics). No student timetable is included._
