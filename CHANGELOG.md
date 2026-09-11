@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.2 — 2026-09-11
+
+Tag: `v1.2.0`. Android version name: `1.2`; version code: `4`.
+
+### Added
+
+- Automatically show the next calendar day once today's final meeting ends, on launch/resume and while following the default view. Manual date navigation remains available.
+- Named holidays and term breaks in daily and weekly views, including the National Day for Truth and Reconciliation and overlapping Remembrance Day/fall term break labels.
+- Bundled public academic dates for offline use, refreshed from UCalgary's academic schedule after each confirmed calendar import.
+- Refresh status and safe fallback when offline or if the university page changes format. Imported meetings are never deleted because of a holiday label.
+
+### Changed
+
+- Added Internet permission for one fixed public HTTPS calendar request. No student schedule or manually entered details are uploaded.
+- Added tests for class-end boundaries, midnight, DST, manual selection, resume behavior, published versus draft date tables, cache updates, and failed refreshes.
+
 ## 1.1 — 2026-09-11
 
 Tag: `v1.1.0`. Android version name: `1.1`; version code: `3`.

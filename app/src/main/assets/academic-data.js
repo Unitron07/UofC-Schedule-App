@@ -1,0 +1,111 @@
+// Public UCalgary dates; no student data. Refresh through the academic calendar page.
+window.BUNDLED_ACADEMIC_DATES = {
+  version: 1,
+  source: "https://calendar.ucalgary.ca/acadsched",
+  checkedAt: 1789150359193,
+  years: [2026, 2027],
+  periods: [
+    {
+      start: "2026-05-18",
+      end: "2026-05-18",
+      name: "Victoria Day",
+      kind: "holiday",
+    },
+    {
+      start: "2026-07-01",
+      end: "2026-07-01",
+      name: "Canada Day",
+      kind: "holiday",
+    },
+    {
+      start: "2026-08-03",
+      end: "2026-08-03",
+      name: "Alberta Heritage Day",
+      kind: "holiday",
+    },
+    {
+      start: "2026-09-07",
+      end: "2026-09-07",
+      name: "Labour Day",
+      kind: "holiday",
+    },
+    {
+      start: "2026-09-30",
+      end: "2026-09-30",
+      name: "National Day for Truth and Reconciliation",
+      kind: "holiday",
+    },
+    {
+      start: "2026-10-12",
+      end: "2026-10-12",
+      name: "Thanksgiving Day",
+      kind: "holiday",
+    },
+    {
+      start: "2026-11-08",
+      end: "2026-11-14",
+      name: "Fall term break",
+      kind: "break",
+    },
+    {
+      start: "2026-11-11",
+      end: "2026-11-11",
+      name: "Remembrance Day",
+      kind: "holiday",
+    },
+    {
+      start: "2026-12-25",
+      end: "2026-12-31",
+      name: "Holiday Observance",
+      kind: "holiday",
+    },
+    {
+      start: "2027-01-01",
+      end: "2027-01-01",
+      name: "New Year's Day",
+      kind: "holiday",
+    },
+    {
+      start: "2027-02-14",
+      end: "2027-02-20",
+      name: "Winter term break",
+      kind: "break",
+    },
+    {
+      start: "2027-02-15",
+      end: "2027-02-15",
+      name: "Alberta Family Day",
+      kind: "holiday",
+    },
+    {
+      start: "2027-03-26",
+      end: "2027-03-26",
+      name: "Good Friday",
+      kind: "holiday",
+    },
+    {
+      start: "2027-03-29",
+      end: "2027-03-29",
+      name: "Easter Monday",
+      kind: "holiday",
+    },
+    {
+      start: "2027-05-24",
+      end: "2027-05-24",
+      name: "Victoria Day",
+      kind: "holiday",
+    },
+    {
+      start: "2027-07-01",
+      end: "2027-07-01",
+      name: "Canada Day",
+      kind: "holiday",
+    },
+    {
+      start: "2027-08-02",
+      end: "2027-08-02",
+      name: "Alberta Heritage Day",
+      kind: "holiday",
+    },
+  ],
+};

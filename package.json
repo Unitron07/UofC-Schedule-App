@@ -1,10 +1,11 @@
 {
   "name": "campus-day",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "scripts": {
-    "test": "node --test tests/calendar.test.cjs tests/courses.test.cjs",
-    "test:ui": "node tests/ui.test.cjs",
+    "refresh:academic": "node scripts/update-academic-snapshot.cjs",
+    "test": "node --test tests/calendar.test.cjs tests/courses.test.cjs tests/day-academic.test.cjs",
+    "test:ui": "node tests/ui.test.cjs && node tests/day-academic-ui.test.cjs",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

@@ -110,7 +110,7 @@ document.addEventListener("input", (event) => {
 function showImportSetup() {
   showSheet(
     "Add a few details?",
-    `<p class="eyebrow">TIMETABLE IMPORTED · OPTIONAL STEP</p><p class="sheet-subtitle">Your classes are ready. Add instructor names, course information, or notes now—or skip and do it later from Timetable.</p><div class="setup-subjects">${courseTitles()
+    `<p class="eyebrow">TIMETABLE IMPORTED · OPTIONAL STEP</p><p class="sheet-subtitle">Your classes are ready. Add instructor names, course information, or notes now—or skip and do it later from Timetable.</p>${academicStatus()}<div class="setup-subjects">${courseTitles()
       .map((title) => {
         const c = courseInfo(title);
         return `<button class="course-row" data-action="setup-edit" data-value="${esc(title)}" style="--course:${color(title)}"><span class="course-dot"></span><div class="subject-row-main">${c.code ? `<span class="course-code">${esc(c.code)}</span>` : ""}<h3>${esc(c.name)}</h3><p>${esc(c.instructor || "Add instructor and other details")}</p></div>${icon("right")}</button>`;

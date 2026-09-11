@@ -8,13 +8,14 @@ Designed around the Samsung Galaxy S24's compact screen, with responsive layouts
   <img src="docs/images/daily.png" width="240" alt="Daily agenda with fictional computing and design classes">
   <img src="docs/images/subject.png" width="240" alt="Subject details with an example instructor and rooms">
   <img src="docs/images/appearance.png" width="240" alt="Appearance settings with five accent colors">
+  <img src="docs/images/holiday.png" width="240" alt="Named holiday card for the National Day for Truth and Reconciliation">
 </p>
 
 _Screenshots show the actual interface in a mobile browser test, using fictional data from [demo.ics](examples/demo.ics). No student timetable is included._
 
 ## Install
 
-Download **Campus-Day-1.1.apk** from [Releases](https://github.com/Unitron07/UofC-Schedule-App/releases). Open it on your phone and allow installation from the app used to open the download when Android asks. Version 1.0 is available as a historical release.
+Download **Campus-Day-1.2.apk** from [Releases](https://github.com/Unitron07/UofC-Schedule-App/releases). Open it on your phone and allow installation from the app used to open the download when Android asks. Earlier versions remain available as historical releases.
 
 1. In your own browser, sign in to the university portal and download your semester's calendar.
 2. Open Campus Day, tap **Import timetable**, and choose the `.ics` file.
@@ -26,14 +27,18 @@ Import a fresh calendar when the university changes your schedule. A new import 
 ## Features
 
 - Daily agenda, next-class countdown, gaps, class details, and a weekly overview.
+- The default day advances to tomorrow at the end of today's final meeting. Days with no meetings stay on today; tomorrow means the next calendar day, even on weekends. Manual date choices stay selected until the app is reopened/resumed or the timetable is imported again.
+- Named UCalgary holidays and term breaks in daily and weekly views, with an offline snapshot and an update after each confirmed import.
 - Searchable subjects with rooms, meeting types, sections, instructors, and editable notes.
 - Lecture, tutorial, and lab inference for supported UCalgary section identifiers; editable for other formats.
 - Blue, lavender, rose, sand, and green accents; light, dark, or system appearance; 12/24-hour time.
 - Calendar import through Android's file picker, Open with, or Share where supported.
 - Calgary time handling, recurrence, exceptions, cancellations, and daylight-saving transitions.
-- No account, analytics, network permission, or university password stored in the app.
+- No account, analytics, or university password stored in the app. Internet permission is used only to fetch the public academic calendar; your timetable is never uploaded.
 
 Course codes are extracted when present in the event title. Missing names and instructors can be entered manually. There is no embedded student enrollment, instructor directory, or catalog lookup. Online courses absent from the calendar are not automatically added.
+
+Holiday labels come from the [official academic schedule](https://calendar.ucalgary.ca/acadsched#fall-2026-winter-20271). The bundled snapshot covers the published Spring/Summer 2026, Fall 2026/Winter 2027, and Spring/Summer 2027 holiday/break tables. A failed refresh keeps saved dates and displays a status message. Unknown dates receive a weekend or unscheduled-day label; the app does not invent a holiday. Imported meetings always remain visible, including on a university holiday, since special program schedules can differ.
 
 ## Build from a fresh clone
 
@@ -84,7 +89,7 @@ Browser tests use the fictional fixture and generate screenshots in ignored `tes
 | `tests/`, `examples/`                                  | Portable checks and fictional calendar                         |
 | `.github/workflows/ci.yml`                             | Formatting, parser/UI checks, Android build                    |
 
-See [CONTRIBUTING.md](CONTRIBUTING.md), [PRIVACY.md](PRIVACY.md), and [CHANGELOG.md](CHANGELOG.md). Tags `v1.0.0` and `v1.1.0` retain source for each APK generation.
+See [CONTRIBUTING.md](CONTRIBUTING.md), [PRIVACY.md](PRIVACY.md), and [CHANGELOG.md](CHANGELOG.md). Tags `v1.0.0`, `v1.1.0`, and `v1.2.0` retain source for each APK generation.
 
 ## Third-party component
 

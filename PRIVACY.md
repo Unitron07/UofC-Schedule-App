@@ -1,6 +1,12 @@
 # Privacy
 
-Campus Day runs offline. Its Android manifest requests no network permission. There are no accounts, analytics SDKs, advertisements, or remote services.
+Your timetable works offline. There are no accounts, analytics SDKs, or advertisements.
+
+## Public academic calendar refresh
+
+Starting in version 1.2, the app requests Android's Internet permission to check `https://calendar.ucalgary.ca/acadsched` after each confirmed timetable import. This is a fixed HTTPS GET request with no calendar, course details, student identifiers, university credentials, or query parameters. Redirects are refused. The website receives ordinary connection information such as your IP address and the app's generic user agent.
+
+Only published holiday and term-break dates are parsed; downloaded HTML is never executed. The app caches the extracted dates locally, not the full page. Included dates and the last successful update remain available offline. Timeouts, failed requests, and unsupported page formats do not block import or erase saved dates. No request is made merely by opening the app.
 
 ## On your phone
 

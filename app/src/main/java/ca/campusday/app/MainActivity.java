@@ -13,9 +13,11 @@ import android.webkit.*;
 import android.widget.FrameLayout;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.net.URL;
+import javax.net.ssl.HttpsURLConnection;
 import org.json.JSONObject;
 
-/** An offline Android host. Only packaged assets can run in the WebView. */
+/** Local timetable host. Only packaged assets run; one fixed public calendar can be fetched. */
 public final class MainActivity extends Activity {
     private WebView web;
     private FrameLayout root;
@@ -58,6 +60,10 @@ public final class MainActivity extends Activity {
                 if (!"https".equals(uri.getScheme()) || !"app.campusday.local".equals(uri.getHost())) return blocked();
                 String path = uri.getPath();
                 if (path == null || path.contains("..")) return blocked();
+                if (path.equals("/academic-calendar")) {
+                    if (!"GET".equals(request.getMethod()) || uri.getQuery() != null) return blocked();
+                    return academicCalendar();
+                }
                 if (path.equals("/")) path = "/index.html";
                 String type = path.endsWith(".css") ? "text/css" : path.endsWith(".js") ? "application/javascript" : path.endsWith(".svg") ? "image/svg+xml" : "text/html";
                 try { return new WebResourceResponse(type, "UTF-8", getAssets().open(path.substring(1))); }
@@ -74,6 +80,32 @@ public final class MainActivity extends Activity {
         handleIntent(getIntent());
     }
     private WebResourceResponse blocked() { return new WebResourceResponse("text/plain", "UTF-8", new ByteArrayInputStream(new byte[0])); }
+    private WebResourceResponse academicCalendar() {
+        HttpsURLConnection connection = null;
+        try {
+            connection = (HttpsURLConnection) new URL("https://calendar.ucalgary.ca/acadsched").openConnection();
+            connection.setRequestMethod("GET");
+            connection.setInstanceFollowRedirects(false);
+            connection.setConnectTimeout(8000);
+            connection.setReadTimeout(8000);
+            connection.setUseCaches(false);
+            connection.setRequestProperty("Accept", "text/html");
+            connection.setRequestProperty("User-Agent", "CampusDay/1.2");
+            if (connection.getResponseCode() != 200) throw new IOException("Academic page unavailable");
+            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            long deadline = SystemClock.elapsedRealtime() + 12000;
+            try (InputStream input = connection.getInputStream()) {
+                byte[] buffer = new byte[8192]; int n;
+                while ((n = input.read(buffer)) != -1) {
+                    if (bytes.size() + n > 2097152 || SystemClock.elapsedRealtime() > deadline) throw new IOException("Academic page limit");
+                    bytes.write(buffer, 0, n);
+                }
+            }
+            return new WebResourceResponse("text/html", "UTF-8", new ByteArrayInputStream(bytes.toByteArray()));
+        } catch (Exception e) {
+            return new WebResourceResponse("text/plain", "UTF-8", 503, "Unavailable", java.util.Collections.emptyMap(), new ByteArrayInputStream(new byte[0]));
+        } finally { if (connection != null) connection.disconnect(); }
+    }
     private void handleIntent(Intent intent) {
         if (intent == null) return;
         Uri uri = null;
@@ -139,7 +171,7 @@ public final class MainActivity extends Activity {
         web.evaluateJavascript("window.applyTheme && window.applyTheme()",null);
     }
     @Override public void onBackPressed() { web.evaluateJavascript("window.handleBack()", result -> { if (!"true".equals(result)) super.onBackPressed(); }); }
-    @Override protected void onResume() { super.onResume(); if (web != null) { web.onResume(); web.evaluateJavascript("window.refreshClock && window.refreshClock()",null); } }
+    @Override protected void onResume() { super.onResume(); if (web != null) { web.onResume(); web.evaluateJavascript("window.resumeSchedule && window.resumeSchedule()",null); } }
     @Override protected void onPause() { if (web != null) web.onPause(); super.onPause(); }
     @Override protected void onDestroy() { if (web != null) { web.removeJavascriptInterface("Android"); web.destroy(); } super.onDestroy(); }
 }
