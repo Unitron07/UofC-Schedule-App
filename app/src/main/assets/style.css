@@ -1158,3 +1158,246 @@ dialog::backdrop {
     transform: none;
   }
 }
+.course-code {
+  display: block;
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: 1px;
+  color: var(--course, var(--accent));
+  margin: 0 0 6px;
+}
+.hero .course-code {
+  color: var(--accent-ink);
+  font-size: 12px;
+}
+.hero-type {
+  font-size: 12px;
+  margin-top: 9px;
+  opacity: 0.8;
+}
+.class-card .course-label {
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  gap: 5px;
+}
+.class-card .course-code {
+  margin-top: 10px;
+}
+.week-event .course-code {
+  font-size: 10px;
+  margin-bottom: 4px;
+}
+.course-row {
+  width: 100%;
+  text-align: left;
+  min-height: 85px;
+}
+.subject-row-main {
+  flex: 1;
+  min-width: 0;
+}
+.course-row > svg {
+  width: 17px;
+  color: var(--muted);
+}
+.subject-heading {
+  padding: 8px 0 20px;
+}
+.subject-heading h2 {
+  font-size: 27px;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.subject-heading p {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 13px;
+}
+.subject-heading .course-code {
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+.session-badge {
+  display: inline-block;
+  padding: 6px 11px;
+  background: var(--surface2);
+  border-radius: 20px;
+  font-size: 12px;
+  margin-bottom: 15px;
+}
+.meeting-group {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 17px;
+  margin-bottom: 12px;
+}
+.meeting-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.meeting-heading strong {
+  color: var(--course);
+  font-size: 15px;
+}
+.meeting-heading span {
+  font-size: 11px;
+  color: var(--muted);
+}
+.meeting-pattern {
+  font-size: 12px;
+  margin: 12px 0;
+}
+.meeting-pattern strong {
+  font-weight: 550;
+}
+.meeting-pattern p {
+  color: var(--muted);
+  margin-top: 6px;
+}
+.meeting-staff {
+  font-size: 12px;
+  margin-top: 13px;
+}
+.meeting-dates {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 7px;
+}
+.subject-notes {
+  font-size: 13px;
+  color: var(--muted);
+}
+.preserve-lines {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.next-session {
+  justify-content: space-between;
+  text-align: left;
+}
+.next-session small {
+  display: block;
+  color: var(--muted);
+  margin-top: 5px;
+}
+.edit-field {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin: 16px 0;
+}
+.edit-field input,
+.edit-field textarea,
+.edit-field select {
+  display: block;
+  width: 100%;
+  min-height: 50px;
+  margin-top: 7px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 16px;
+}
+.edit-field textarea {
+  resize: vertical;
+}
+.edit-section {
+  margin: 16px 0;
+  padding: 12px 15px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+}
+.edit-section legend {
+  padding: 0 6px;
+  font-size: 13px;
+}
+.edit-section > p {
+  font-size: 11px;
+}
+.edit-section .edit-field {
+  margin: 12px 0;
+}
+#subject-form .primary {
+  margin-top: 22px;
+}
+.detail-item > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.hero h2 {
+  font-size: 23px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.hero .course-code {
+  position: relative;
+  z-index: 1;
+}
+.hero:after {
+  pointer-events: none;
+}
+:root[data-theme="light"] #sheet > .course-code {
+  color: #426426;
+}
+.accent-picker {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 5px;
+  margin: 15px 0 20px;
+}
+.accent-option {
+  font-size: 10px;
+  min-height: 68px;
+  padding: 5px 1px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  color: var(--muted);
+}
+.accent-option > span {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+.accent-option svg {
+  width: 17px;
+  height: 17px;
+}
+.accent-option.selected {
+  border-color: var(--line);
+  background: var(--surface);
+  color: var(--text);
+}
+.hero .eyebrow,
+.hero .course-code {
+  color: var(--accent-ink);
+}
+.hero .badge {
+  border-color: color-mix(in srgb, var(--accent-ink) 25%, transparent);
+}
+.hero .progress-fill {
+  background: var(--accent-ink);
+}
+.hero .progress-track {
+  background: color-mix(in srgb, var(--accent-ink) 15%, transparent);
+}
+:root[data-theme="light"] .nav-button.active,
+:root[data-theme="light"] #sheet > .course-code,
+:root[data-theme="light"] .welcome .eyebrow,
+:root[data-theme="light"] .empty-symbol,
+:root[data-theme="light"] .file-mark {
+  color: var(--accent-text);
+}

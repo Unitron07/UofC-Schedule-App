@@ -208,7 +208,21 @@
         const day = allDay
           ? detail.startDate.toString().slice(0, 10)
           : dateKey(start);
-        events.push({ id, title, location, start, end, day, allDay });
+        const organizer = item.component.getFirstProperty("organizer");
+        const person = String(organizer?.getParameter("cn") || "").trim();
+        const instructor = /^(TBD|TBA|unknown|staff)$/i.test(person)
+          ? ""
+          : person;
+        events.push({
+          id,
+          title,
+          location,
+          start,
+          end,
+          day,
+          allDay,
+          instructor,
+        });
       }
     }
     if (!events.length)

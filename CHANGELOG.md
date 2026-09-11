@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.1 — 2026-09-11
+
+Tag: `v1.1.0`. Android version name: `1.1`; version code: `3`.
+
+### Added
+
+- Course code and full-name display, with manual editing for missing calendar fields.
+- Lecture, tutorial, and lab labels inferred from supported section identifiers.
+- Tappable subjects with teaching staff, rooms, sections, dates, and session counts.
+- Saved course instructors, section instructors/TAs, office hours, and notes.
+- Optional post-import setup with **Skip for now** and later editing.
+- Five accent palettes and persistent appearance preferences.
+
+### Changed
+
+- Distributable builds start empty and use generic imported data only. No student-specific course, instructor, or online-course presets are bundled.
+- Build number advanced to 3 so this release can update an earlier development build of 1.1.
+- Added Gradle wrapper, portable tests, fictional fixture, example screenshots, and CI.
+
 ## 1.0 — 2026-09-11
 
 Tag: `v1.0.0`. Android version name: `1.0`; version code: `1`.

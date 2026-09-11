@@ -38,13 +38,44 @@ const paths = {
 const icon = (name) =>
   `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${paths[name] || paths.calendar}"/></svg>`;
 let schedule = null,
-  prefs = { theme: "dark", hour24: false },
+  prefs = { theme: "dark", hour24: false, accent: "sky" },
   selected = E.dateKey(Date.now()),
   tab = "day",
   search = "",
   pending = null,
   previousFocus = null;
 const storageKey = "campusday.schedule.v1";
+const detailsKey = "campusday.course-details.v1";
+let courseDetails = {};
+try {
+  const stored = JSON.parse(localStorage.getItem(detailsKey) || "{}");
+  if (stored && typeof stored === "object" && !Array.isArray(stored))
+    courseDetails = stored;
+} catch (e) {}
+function courseTitles() {
+  return schedule.courses;
+}
+function courseInfo(title) {
+  return Courses.info(
+    schedule.events.find((e) => e.title === title) || { title, id: "" },
+    courseDetails,
+  );
+}
+function sessionInfo(e) {
+  return Courses.session(e, courseDetails);
+}
+function nameOf(e) {
+  return courseInfo(e.title).name;
+}
+function codeLabel(e) {
+  const c = courseInfo(e.title);
+  return c.code ? '<span class="course-code">' + esc(c.code) + "</span>" : "";
+}
+function typeLabel(e) {
+  const c = sessionInfo(e);
+  return c.type + (c.section ? " · " + c.section : "");
+}
+
 try {
   schedule = JSON.parse(localStorage.getItem(storageKey));
   if (
@@ -95,7 +126,7 @@ function duration(ms) {
     : `${m} min`;
 }
 function color(title) {
-  let i = schedule ? schedule.courses.indexOf(title) : 0;
+  let i = schedule ? courseTitles().indexOf(title) : 0;
   return `var(--c${Math.max(0, i) % 4})`;
 }
 function room(location) {
@@ -125,6 +156,74 @@ function toast(message) {
   clearTimeout(toast.timer);
   toast.timer = setTimeout(() => $("#toast").classList.remove("show"), 3500);
 }
+const accents = {
+  sky: {
+    label: "Blue",
+    fill: "#b5d8fa",
+    ink: "#182d43",
+    text: "#315d83",
+    dark: ["#b9c5fa", "#b1dce9", "#a7cdef", "#cec5ed"],
+    light: ["#536299", "#386877", "#37658c", "#6e5888"],
+  },
+  lilac: {
+    label: "Lavender",
+    fill: "#d6c6f6",
+    ink: "#302347",
+    text: "#675087",
+    dark: ["#d0b8ef", "#bcbef4", "#e3bedd", "#c5cef6"],
+    light: ["#70528e", "#565b95", "#8a527e", "#526597"],
+  },
+  rose: {
+    label: "Rose",
+    fill: "#f3bfce",
+    ink: "#452532",
+    text: "#914a61",
+    dark: ["#ecc0d5", "#f1b8b3", "#d9b8e6", "#f1c4ab"],
+    light: ["#875773", "#925752", "#7b578d", "#8b654d"],
+  },
+  sand: {
+    label: "Sand",
+    fill: "#f0d2a4",
+    ink: "#3d2e18",
+    text: "#7e6030",
+    dark: ["#eacfa5", "#e9bfa6", "#dbccb0", "#efc29c"],
+    light: ["#80613c", "#8d5d40", "#74674e", "#8e653f"],
+  },
+  sage: {
+    label: "Green",
+    fill: "#d3edab",
+    ink: "#213016",
+    text: "#426426",
+    dark: ["#c3c0f4", "#e7bf96", "#b5dabf", "#a7cddf"],
+    light: ["#666296", "#996438", "#447e55", "#3e758e"],
+  },
+};
+function accentPicker() {
+  return (
+    '<p class="eyebrow" style="margin-top:24px">ACCENT COLOR</p><div class="accent-picker" role="group" aria-label="Accent color">' +
+    Object.entries(accents)
+      .map(
+        ([key, a]) =>
+          '<button class="accent-option ' +
+          (prefs.accent === key ? "selected" : "") +
+          '" data-action="accent" data-value="' +
+          key +
+          '" aria-pressed="' +
+          (prefs.accent === key) +
+          '"><span style="background:' +
+          a.fill +
+          ";color:" +
+          a.ink +
+          '">' +
+          (prefs.accent === key ? icon("check") : "") +
+          "</span>" +
+          a.label +
+          "</button>",
+      )
+      .join("") +
+    "</div>"
+  );
+}
 function applyTheme() {
   const systemDark = window.Android
     ? Android.systemDark()
@@ -132,6 +231,14 @@ function applyTheme() {
   const theme =
     prefs.theme === "system" ? (systemDark ? "dark" : "light") : prefs.theme;
   document.documentElement.dataset.theme = theme;
+  const a = accents[prefs.accent] || accents.sky;
+  const style = document.documentElement.style;
+  style.setProperty("--accent", a.fill);
+  style.setProperty("--accent-ink", a.ink);
+  style.setProperty("--accent-text", a.text);
+  a[theme === "light" ? "light" : "dark"].forEach((value, i) =>
+    style.setProperty("--c" + i, value),
+  );
   window.Android?.theme(theme);
 }
 function savePrefs() {
@@ -203,13 +310,13 @@ function hero(events) {
       : e.allDay
         ? "All day"
         : time(e.start);
-  return `<section class="hero" aria-label="${live ? "Current class" : "Next class"}"><div class="hero-top"><span class="live-label"><span class="live-dot"></span>${live ? "HAPPENING NOW" : isToday ? "UP NEXT" : "FIRST ON YOUR DAY"}</span><span class="badge">${esc(badge)}</span></div><h2>${esc(e.title)}</h2><div class="hero-meta"><span>${icon("clock")}${esc(timeRange(e))}</span><span>${icon("pin")}${esc(room(e.location))}</span></div>${live ? `<div class="progress-track" role="progressbar" aria-label="Class progress" aria-valuenow="${Math.round(((now - e.start) / (e.end - e.start)) * 100)}" aria-valuemin="0" aria-valuemax="100"><div class="progress-fill" style="width:${Math.max(0, Math.min(100, ((now - e.start) / (e.end - e.start)) * 100))}%"></div></div>` : ""}</section>`;
+  return `<section class="hero" aria-label="${live ? "Current class" : "Next class"}"><div class="hero-top"><span class="live-label"><span class="live-dot"></span>${live ? "HAPPENING NOW" : isToday ? "UP NEXT" : "FIRST ON YOUR DAY"}</span><span class="badge">${esc(badge)}</span></div>${codeLabel(e)}<h2>${esc(nameOf(e))}</h2><p class="hero-type">${esc(typeLabel(e))}</p><div class="hero-meta"><span>${icon("clock")}${esc(timeRange(e))}</span><span>${icon("pin")}${esc(room(e.location))}</span></div>${live ? `<div class="progress-track" role="progressbar" aria-label="Class progress" aria-valuenow="${Math.round(((now - e.start) / (e.end - e.start)) * 100)}" aria-valuemin="0" aria-valuemax="100"><div class="progress-fill" style="width:${Math.max(0, Math.min(100, ((now - e.start) / (e.end - e.start)) * 100))}%"></div></div>` : ""}</section>`;
 }
 function classCard(e) {
   const now = Date.now(),
     past = e.end < now,
     live = e.start <= now && e.end > now;
-  return `<div class="agenda-row"><div class="time-rail">${e.allDay ? "All day" : esc(time(e.start, true))}<span class="end-time">${e.allDay ? "" : esc(time(e.end, true))}</span></div><button class="class-card ${past ? "past" : ""} ${live ? "ongoing" : ""}" style="--course:${color(e.title)}" data-action="detail" data-value="${esc(e.id)}" aria-label="${esc(e.title + ", " + timeRange(e) + ", " + e.location)}"><div class="course-label"><span>${e.allDay ? "ALL DAY" : esc(duration(e.end - e.start)) + " SESSION"}</span><span>${live ? "IN CLASS" : past ? "FINISHED" : ""}</span></div><h3>${esc(e.title)}</h3><div class="card-footer"><span class="room">${icon("pin")}${esc(room(e.location))}</span>${icon("right")}</div></button></div>`;
+  return `<div class="agenda-row"><div class="time-rail">${e.allDay ? "All day" : esc(time(e.start, true))}<span class="end-time">${e.allDay ? "" : esc(time(e.end, true))}</span></div><button class="class-card ${past ? "past" : ""} ${live ? "ongoing" : ""}" style="--course:${color(e.title)}" data-action="detail" data-value="${esc(e.id)}" aria-label="${esc((courseInfo(e.title).code + " " + nameOf(e)).trim() + ", " + typeLabel(e) + ", " + timeRange(e) + ", " + e.location)}"><div class="course-label"><span>${esc(typeLabel(e))}</span><span>${live ? "IN CLASS" : past ? "FINISHED" : ""}</span></div>${codeLabel(e)}<h3>${esc(nameOf(e))}</h3><div class="card-footer"><span class="room">${icon("pin")}${esc(room(e.location))}</span>${icon("right")}</div></button></div>`;
 }
 function renderDay() {
   const events = dayEvents(selected),
@@ -255,25 +362,50 @@ function renderWeek() {
     (_, i) => {
       const d = addDays(start, i),
         events = dayEvents(d);
-      return `<section><div class="week-day-title"><h3>${esc(dateText(d, { weekday: "long" }))}${d === today() ? "<em>TODAY</em>" : ""}</h3><span>${esc(dateText(d, { month: "short", day: "numeric" }))}</span></div>${events.length ? events.map((e) => `<button class="week-event" data-action="detail" data-value="${esc(e.id)}" style="--course:${color(e.title)}"><span class="swatch"></span><div class="event-main"><h3>${esc(e.title)}</h3><p>${esc(room(e.location))}</p></div><div class="event-time">${e.allDay ? "All day" : esc(time(e.start))}<span>${e.allDay ? "" : esc(time(e.end))}</span></div></button>`).join("") : '<p class="free-day">No classes. A day to make your own.</p>'}</section>`;
+      return `<section><div class="week-day-title"><h3>${esc(dateText(d, { weekday: "long" }))}${d === today() ? "<em>TODAY</em>" : ""}</h3><span>${esc(dateText(d, { month: "short", day: "numeric" }))}</span></div>${events.length ? events.map((e) => `<button class="week-event" data-action="detail" data-value="${esc(e.id)}" style="--course:${color(e.title)}"><span class="swatch"></span><div class="event-main">${codeLabel(e)}<h3>${esc(nameOf(e))}</h3><p>${esc(typeLabel(e))} · ${esc(room(e.location))}</p></div><div class="event-time">${e.allDay ? "All day" : esc(time(e.start))}<span>${e.allDay ? "" : esc(time(e.end))}</span></div></button>`).join("") : '<p class="free-day">No classes. A day to make your own.</p>'}</section>`;
     },
   ).join("")}</main>`;
 }
 function courseRows() {
-  const courses = schedule.courses.filter((c) =>
-    c.toLowerCase().includes(search.toLowerCase()),
-  );
+  const courses = courseTitles().filter((c) => {
+    const info = courseInfo(c);
+    return (info.code + " " + info.name + " " + c)
+      .toLowerCase()
+      .includes(search.toLowerCase());
+  });
   return courses.length
     ? courses
         .map((c) => {
-          const es = schedule.events.filter((e) => e.title === c);
-          return `<div class="course-row" style="--course:${color(c)}"><span class="course-dot"></span><div><h3>${esc(c)}</h3><p>${es.length} sessions · ${new Set(es.map((e) => e.location)).size} ${new Set(es.map((e) => e.location)).size === 1 ? "room" : "rooms"}</p></div></div>`;
+          const es = schedule.events.filter((e) => e.title === c),
+            info = courseInfo(c);
+          return (
+            '<button class="course-row" data-action="subject" data-value="' +
+            esc(c) +
+            '" style="--course:' +
+            color(c) +
+            '"><span class="course-dot"></span><div class="subject-row-main">' +
+            (info.code
+              ? '<span class="course-code">' + esc(info.code) + "</span>"
+              : "") +
+            "<h3>" +
+            esc(info.name) +
+            "</h3><p>" +
+            (info.online
+              ? "Online · No scheduled meetings"
+              : es.length +
+                " sessions · " +
+                new Set(es.map((e) => e.location)).size +
+                " rooms") +
+            "</p></div>" +
+            icon("right") +
+            "</button>"
+          );
         })
         .join("")
     : '<p class="notice">No matching subjects.</p>';
 }
 function renderTimetable() {
-  return `<main><div class="heading"><p class="eyebrow">A PLACE FOR EVERYTHING</p><h1 style="margin-top:8px">Your timetable.</h1></div><section class="summary-panel"><div class="file-mark">${icon("calendar")}</div><h2>${esc(schedule.name.replace(/^Class Calendar\s*-?\s*/i, ""))}</h2><p>${esc(dateText(schedule.first, { month: "short", day: "numeric" }))} – ${esc(dateText(schedule.last, { month: "short", day: "numeric", year: "numeric" }))}</p><div class="stats"><div class="stat"><strong>${schedule.courses.length}</strong><span>SUBJECTS</span></div><div class="stat"><strong>${schedule.events.length}</strong><span>SESSIONS</span></div></div><button class="primary" data-action="import">${icon("upload")}Import updated calendar</button><p style="text-align:center;margin-top:13px;font-size:10px">Imported ${esc(new Intl.DateTimeFormat("en-CA", { timeZone: E.ZONE, month: "short", day: "numeric" }).format(new Date(schedule.importedAt)))} · Saved on this phone</p></section><div class="section-head"><h2>Your subjects</h2><small>${schedule.courses.length} total</small></div><label class="search">${icon("search")}<input id="course-search" type="search" placeholder="Find a subject" aria-label="Find a subject" value="${esc(search)}"></label><div id="course-list">${courseRows()}</div><p class="notice">Calendar times stay in Calgary time, even when you travel. Changes at university appear here after you import a fresh calendar.${schedule.bounded ? " Open-ended events are included for two years." : ""}</p><button class="secondary" data-action="help">${icon("info")}How to update your timetable</button></main>`;
+  return `<main><div class="heading"><p class="eyebrow">A PLACE FOR EVERYTHING</p><h1 style="margin-top:8px">Your timetable.</h1></div><section class="summary-panel"><div class="file-mark">${icon("calendar")}</div><h2>${esc(schedule.name.replace(/^Class Calendar\s*-?\s*/i, ""))}</h2><p>${esc(dateText(schedule.first, { month: "short", day: "numeric" }))} – ${esc(dateText(schedule.last, { month: "short", day: "numeric", year: "numeric" }))}</p><div class="stats"><div class="stat"><strong>${courseTitles().length}</strong><span>SUBJECTS</span></div><div class="stat"><strong>${schedule.events.length}</strong><span>SESSIONS</span></div></div><button class="primary" data-action="import">${icon("upload")}Import updated calendar</button><p style="text-align:center;margin-top:13px;font-size:10px">Imported ${esc(new Intl.DateTimeFormat("en-CA", { timeZone: E.ZONE, month: "short", day: "numeric" }).format(new Date(schedule.importedAt)))} · Saved on this phone</p></section><div class="section-head"><h2>Your subjects</h2><small>${courseTitles().length} total</small></div><label class="search">${icon("search")}<input id="course-search" type="search" placeholder="Find a subject" aria-label="Find a subject" value="${esc(search)}"></label><div id="course-list">${courseRows()}</div><p class="notice">Calendar times stay in Calgary time, even when you travel. Changes at university appear here after you import a fresh calendar.${schedule.bounded ? " Open-ended events are included for two years." : ""}</p><button class="secondary" data-action="help">${icon("info")}How to update your timetable</button></main>`;
 }
 function showSheet(title, body) {
   const dialog = $("#sheet");
@@ -284,13 +416,14 @@ function showSheet(title, body) {
 }
 function closeSheet() {
   if ($("#sheet").open) $("#sheet").close();
+  $("#sheet").innerHTML = "";
   pending = null;
   if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
 }
 function settingsSheet() {
   showSheet(
     "Make it yours",
-    `<p class="eyebrow" style="margin-top:22px">APPEARANCE</p><div class="segmented" role="group" aria-label="Appearance">${["light", "dark", "system"].map((t) => `<button class="${prefs.theme === t ? "selected" : ""}" data-action="theme" data-value="${t}" aria-pressed="${prefs.theme === t}">${t[0].toUpperCase() + t.slice(1)}</button>`).join("")}</div><div class="settings-row"><div><strong>24-hour time</strong><p>Use 14:00 instead of 2:00 PM</p></div><button class="switch ${prefs.hour24 ? "on" : ""}" role="switch" aria-checked="${prefs.hour24}" aria-label="24-hour time" data-action="time-format"></button></div><div class="settings-row"><div><strong>Campus time zone</strong><p>Calgary · Mountain Time</p></div>${icon("pin")}</div><p class="notice">Campus Day works entirely offline. Your calendar is stored on this phone, with no account, tracking, or university password.</p><button class="secondary" data-action="help">${icon("info")}Calendar import help</button>${schedule ? '<button class="danger" data-action="remove-confirm">Remove imported timetable</button>' : ""}<p class="privacy-line">Campus Day 1.0 · Independently made for campus life</p>`,
+    `<p class="eyebrow" style="margin-top:22px">APPEARANCE</p><div class="segmented" role="group" aria-label="Appearance">${["light", "dark", "system"].map((t) => `<button class="${prefs.theme === t ? "selected" : ""}" data-action="theme" data-value="${t}" aria-pressed="${prefs.theme === t}">${t[0].toUpperCase() + t.slice(1)}</button>`).join("")}</div>${accentPicker()}<div class="settings-row"><div><strong>24-hour time</strong><p>Use 14:00 instead of 2:00 PM</p></div><button class="switch ${prefs.hour24 ? "on" : ""}" role="switch" aria-checked="${prefs.hour24}" aria-label="24-hour time" data-action="time-format"></button></div><div class="settings-row"><div><strong>Campus time zone</strong><p>Calgary · Mountain Time</p></div>${icon("pin")}</div><p class="notice">Campus Day works entirely offline. Your calendar is stored on this phone, with no account, tracking, or university password.</p><button class="secondary" data-action="help">${icon("info")}Calendar import help</button>${schedule ? '<button class="danger" data-action="remove-confirm">Remove imported timetable</button>' : ""}<p class="privacy-line">Campus Day 1.1 · Independently made for campus life</p>`,
   );
 }
 function detailSheet(id) {
@@ -298,7 +431,7 @@ function detailSheet(id) {
   if (!e) return;
   showSheet(
     "Class details",
-    `<div class="detail-title" style="color:${color(e.title)}">${esc(e.title)}</div><div class="detail-item">${icon("calendar")}<div><strong>${esc(dateText(e.day, { weekday: "long", month: "long", day: "numeric" }))}</strong><p>${esc(dateText(e.day, { year: "numeric" }))}</p></div></div><div class="detail-item">${icon("clock")}<div><strong>${esc(timeRange(e))}</strong><p>${e.allDay ? "All-day event" : esc(duration(e.end - e.start)) + " · Calgary time"}</p></div></div><div class="detail-item">${icon("pin")}<div><strong>${esc(room(e.location))}</strong><p>${esc(e.location)}</p></div></div><button class="primary" style="margin-top:22px" data-action="view-day" data-value="${e.day}">View this day${icon("arrow")}</button>`,
+    `${codeLabel(e)}<div class="detail-title" style="color:${color(e.title)}">${esc(nameOf(e))}</div><p class="session-badge">${esc(typeLabel(e))}</p><div class="detail-item">${icon("book")}<div><strong>${esc(sessionInfo(e).instructor || "Instructor not added")}</strong><p>Instructor / teaching staff</p></div></div><div class="detail-item">${icon("calendar")}<div><strong>${esc(dateText(e.day, { weekday: "long", month: "long", day: "numeric" }))}</strong><p>${esc(dateText(e.day, { year: "numeric" }))}</p></div></div><div class="detail-item">${icon("clock")}<div><strong>${esc(timeRange(e))}</strong><p>${e.allDay ? "All-day event" : esc(duration(e.end - e.start)) + " · Calgary time"}</p></div></div><div class="detail-item">${icon("pin")}<div><strong>${esc(room(e.location))}</strong><p>${esc(e.location)}</p></div></div><button class="primary" style="margin-top:22px" data-action="view-day" data-value="${e.day}">View this day${icon("arrow")}</button><button class="secondary" style="margin-top:10px" data-action="subject" data-value="${esc(e.title)}">Subject details</button>`,
   );
 }
 function helpSheet() {
@@ -364,6 +497,7 @@ function confirmImport() {
   render();
   window.scrollTo(0, 0);
   toast("Timetable imported. You’re all set.");
+  showImportSetup();
 }
 window.handleBack = () => {
   if ($("#sheet").open) {
@@ -407,12 +541,19 @@ document.addEventListener("click", (event) => {
     render();
     window.scrollTo(0, 0);
   } else if (a === "detail") detailSheet(v);
+  else if (a === "subject") subjectSheet(v);
+  else if (a === "edit-subject") editSubject(v);
   else if (a === "view-day") {
     selected = v;
     tab = "day";
     closeSheet();
     render();
     window.scrollTo(0, 0);
+  } else if (a === "accent") {
+    prefs.accent = v;
+    savePrefs();
+    render();
+    settingsSheet();
   } else if (a === "theme") {
     prefs.theme = v;
     savePrefs();
@@ -430,7 +571,9 @@ document.addEventListener("click", (event) => {
     );
   else if (a === "remove") {
     try {
+      localStorage.removeItem(detailsKey);
       localStorage.removeItem(storageKey);
+      courseDetails = {};
     } catch (e) {
       toast("Could not remove the saved timetable.");
       return;

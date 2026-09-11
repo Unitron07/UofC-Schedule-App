@@ -1,9 +1,9 @@
 {
   "name": "campus-day",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "scripts": {
-    "test": "node --test tests/calendar.test.cjs",
+    "test": "node --test tests/calendar.test.cjs tests/courses.test.cjs",
     "test:ui": "node tests/ui.test.cjs",
     "format": "prettier --write .",
     "format:check": "prettier --check ."

@@ -4,9 +4,9 @@ Campus Day runs offline. Its Android manifest requests no network permission. Th
 
 ## On your phone
 
-The file picker grants access to the file you choose. Imported event titles, dates, rooms, identifiers, and available teaching-staff information are saved in private WebView storage. Appearance preferences are stored there too. Android backup is disabled.
+The file picker grants access to the file you choose. Imported event titles, dates, rooms, identifiers, and available teaching-staff information are saved in private WebView storage. Manually entered subject details and preferences are stored there too. Android backup is disabled.
 
-**Settings → Remove imported timetable** removes the schedule. Clearing app storage or uninstalling removes all app data. The original file in Downloads is independent; remove it separately if desired.
+**Settings → Remove imported timetable** removes the schedule and subject details. Clearing app storage or uninstalling removes all app data. The original file in Downloads is independent; remove it separately if desired.
 
 Times are displayed in Calgary time. The app never asks for your university password. Use your own browser when downloading a calendar.
 
