@@ -32,10 +32,20 @@ Import a fresh calendar when the university changes your schedule. A new import 
 - Lecture, tutorial, and lab inference for supported UCalgary section identifiers; editable for other formats.
 - Blue, lavender, rose, sand, and green accents; light, dark, or system appearance; 12/24-hour time.
 - Calendar import through Android's file picker, Open with, or Share where supported.
-- Calgary time handling, recurrence, exceptions, cancellations, and daylight-saving transitions.
+- Saved manual time-zone selection or automatic use of the phone's time zone, with recurrence, exceptions, cancellations, and daylight-saving transitions.
 - No account, analytics, or university password stored in the app. Internet permission is used only to fetch the public academic calendar; your timetable is never uploaded.
 
 Course codes are extracted when present in the event title. Missing names and instructors can be entered manually. There is no embedded student enrollment, instructor directory, or catalog lookup. Online courses absent from the calendar are not automatically added.
+
+### Time and time zones
+
+Open **Settings** and choose a **Manual time zone**, or turn on **Use phone time zone** to follow the phone when you travel. Calgary (`America/Edmonton`) remains the default. Turning phone mode off restores your last manual choice. Preferences work offline and survive reopening and calendar replacement.
+
+Calgary uses **Alberta Time (ABT), UTC−6 year-round**, from November 1, 2026, following the [Government of Alberta's published change](https://www.alberta.ca/albertas-new-time-system-abt). The app applies this rule even on devices with an older time-zone database, while preserving Calgary's historical seasonal rules. The picker also offers a fixed **ABT · UTC−6 year-round** option. Re-import a fresh timetable if an older import has incorrect future winter class times; explicitly UTC-stamped meetings retain their specified instants.
+
+Class times, date grouping, and the default day use the selected zone. All-day events and UCalgary holiday labels keep their calendar dates. Calendar-provided time zones are honored during import; floating times without a zone are still interpreted as Calgary time. Changing the display zone preserves the actual meeting instants and does not require re-importing.
+
+The clock and countdowns read the phone's system time and refresh on resume or Android clock/time-zone changes. Configure automatic date and time in Android settings if you want the phone to synchronize its clock; Campus Day does not set the phone's clock or contact a time server.
 
 Holiday labels come from the [official academic schedule](https://calendar.ucalgary.ca/acadsched#fall-2026-winter-20271). The bundled snapshot covers the published Spring/Summer 2026, Fall 2026/Winter 2027, and Spring/Summer 2027 holiday/break tables. A failed refresh keeps saved dates and displays a status message. Unknown dates receive a weekend or unscheduled-day label; the app does not invent a holiday. Imported meetings always remain visible, including on a university holiday, since special program schedules can differ.
 
@@ -82,6 +92,7 @@ Browser tests use the fictional fixture and generate screenshots in ignored `tes
 | ------------------------------------------------------ | -------------------------------------------------------------- |
 | `app/src/main/java/ca/campusday/app/MainActivity.java` | Android host, file access, local WebView origin, system insets |
 | `app/src/main/assets/calendar.js`                      | ICS parsing, recurrence, Calgary time                          |
+| `app/src/main/assets/schedule-time.js`                 | Display-zone selection and calendar date conversion            |
 | `app/src/main/assets/courses.js`                       | Generic course identity and user-provided metadata             |
 | `app/src/main/assets/app.js`, `subjects.js`            | Views, import flow, preferences, subject editor                |
 | `app/src/main/assets/style.css`                        | Responsive interface and appearance palettes                   |

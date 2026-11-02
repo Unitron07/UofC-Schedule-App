@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Calgary's permanent Alberta Time (ABT), UTC−6 from November 1, 2026, including on older WebViews and for imported Calgary VTIMEZONE definitions that still specify a fall clock change. Historical Calgary dates keep their original rules; explicit UTC meeting instants remain unchanged.
+- Saved manual time-zone selection and a **Use phone time zone** switch in Settings. Calgary remains the default and the last manual zone is restored when phone mode is turned off.
+- Consistent local times and dates in daily, weekly, import-preview, class, and subject views. All-day events and academic holidays retain their calendar dates; imported meeting instants and saved course details are preserved.
+- Automatic refresh after Android clock/date/time-zone changes and on resume. The clock and countdowns follow the phone's system time without a network service or new permission.
+- Regression coverage for date boundaries, overnight events, DST, fractional offsets, preference persistence, phone-zone changes, and compact layouts.
+
+### Changed
+
+- DST parser tests use a historical transition so future time-zone rule updates do not invalidate the test fixture.
+
 ## 1.2 — 2026-09-11
 
 Tag: `v1.2.0`. Android version name: `1.2`; version code: `4`.
