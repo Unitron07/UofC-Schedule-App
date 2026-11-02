@@ -12,6 +12,8 @@
 
 ### Changed
 
+- Time-zone labels consistently show the zone name and UTC offset, such as **ABT UTC−6**.
+- CI requests supported Android platform tools instead of the retired legacy SDK tools package.
 - DST parser tests use a historical transition so future time-zone rule updates do not invalidate the test fixture.
 
 ## 1.2 — 2026-09-11
