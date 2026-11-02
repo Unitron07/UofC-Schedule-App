@@ -38,12 +38,20 @@ const paths = {
 const icon = (name) =>
   `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${paths[name] || paths.calendar}"/></svg>`;
 let schedule = null,
-  prefs = { theme: "dark", hour24: false, accent: "sky" },
+  importedSchedule = null,
+  prefs = {
+    theme: "dark",
+    hour24: false,
+    accent: "sky",
+    usePhoneZone: false,
+    timeZone: E.ZONE,
+  },
   selected = E.dateKey(Date.now()),
   tab = "day",
   search = "",
   pending = null,
-  previousFocus = null;
+  previousFocus = null,
+  refreshSheet = null;
 const storageKey = "campusday.schedule.v1";
 const detailsKey = "campusday.course-details.v1";
 let courseDetails = {};
@@ -93,8 +101,21 @@ try {
   schedule = null;
 }
 let followDefaultDay = true;
-selected = DayDefault.defaultDay(schedule);
-const today = () => E.dateKey(Date.now());
+importedSchedule = schedule;
+let displayZone = ScheduleTime.resolveZone(prefs);
+schedule = ScheduleTime.project(importedSchedule, displayZone);
+const defaultDay = () =>
+  DayDefault.defaultDay(schedule, Date.now(), displayZone);
+selected = defaultDay();
+const today = () => E.dateKey(Date.now(), displayZone);
+const zoneLabel = () => ScheduleTime.label(displayZone);
+function updateTimeZone() {
+  displayZone = ScheduleTime.resolveZone(prefs);
+  schedule = ScheduleTime.project(importedSchedule, displayZone);
+  followDefaultDay = true;
+  selected = defaultDay();
+  render();
+}
 const dateObj = (key) => new Date(key + "T12:00:00Z");
 function addDays(key, n) {
   const d = dateObj(key);
@@ -112,7 +133,7 @@ function dateText(key, opts = { month: "long", day: "numeric" }) {
 }
 function time(ms, short = false) {
   return new Intl.DateTimeFormat("en-US", {
-    timeZone: E.ZONE,
+    timeZone: E.formatZone(ms, displayZone),
     hour: "numeric",
     minute: "2-digit",
     hour12: !prefs.hour24,
@@ -137,9 +158,7 @@ function room(location) {
 }
 function dayEvents(key) {
   return schedule
-    ? schedule.events.filter(
-        (e) => e.day === key || (e.day < key && E.dateKey(e.end - 1) >= key),
-      )
+    ? schedule.events.filter((e) => e.day <= key && e.endDay >= key)
     : [];
 }
 function timeRange(e) {
@@ -328,7 +347,7 @@ function renderDay() {
     .reduce((s, e) => s + e.end - e.start, 0);
   const finished =
     events.length && events.every((e) => e.end <= now) && isToday;
-  return `<main>${dateHeader(isToday ? "Your day, at a glance." : dateText(selected, { weekday: "long" }) + ".", schedule.name.replace(/^Class Calendar\s*-?\s*/i, ""))}${weekSelector()}${followDefaultDay && selected !== today() ? '<p class="notice rollover-note">Today’s classes are finished. Here’s tomorrow.</p>' : ""}${events.length && AcademicDates.forDay(selected) ? `<p class="notice academic-notice">${esc(AcademicDates.forDay(selected).title)} · Your imported classes are shown below. Check your course instructions.</p>` : ""}${hero(events)}${
+  return `<main>${dateHeader(isToday ? "Your day, at a glance." : dateText(selected, { weekday: "long" }) + ".", schedule.name.replace(/^Class Calendar\s*-?\s*/i, ""))}<p class="time-zone-label">${esc(zoneLabel())}</p>${weekSelector()}${followDefaultDay && selected !== today() ? '<p class="notice rollover-note">Today’s classes are finished. Here’s tomorrow.</p>' : ""}${events.length && AcademicDates.forDay(selected) ? `<p class="notice academic-notice">${esc(AcademicDates.forDay(selected).title)} · Your imported classes are shown below. Check your course instructions.</p>` : ""}${hero(events)}${
     !events.length
       ? emptyDay()
       : `<div class="section-head"><h2>${isToday ? "Today’s agenda" : "Day’s agenda"}</h2><small>${events.length} ${events.length === 1 ? "class" : "classes"} · ${duration(total)}</small></div><div class="agenda">${events
@@ -411,8 +430,10 @@ function emptyDay() {
 function renderWeek() {
   const start = monday(selected),
     end = addDays(start, 6),
-    weekEvents = schedule.events.filter((e) => e.day >= start && e.day <= end);
-  return `<main><div class="heading"><p class="eyebrow">MAKE ROOM FOR YOUR WEEK</p><div class="heading-line"><h1>The week ahead.</h1><button class="today-pill" data-action="today">This week</button></div><p class="muted" style="font-size:13px;margin-top:10px">${weekEvents.length} sessions. One clear picture.</p></div><div class="week-controls"><button class="icon-button" data-action="shift-week" data-value="-7" aria-label="Previous week">${icon("left")}</button><strong>${esc(dateText(start, { month: "short", day: "numeric" }))} – ${esc(dateText(end, { month: "short", day: "numeric" }))}</strong><button class="icon-button" data-action="shift-week" data-value="7" aria-label="Next week">${icon("right")}</button></div>${Array.from(
+    weekEvents = schedule.events.filter(
+      (e) => e.endDay >= start && e.day <= end,
+    );
+  return `<main><div class="heading"><p class="eyebrow">MAKE ROOM FOR YOUR WEEK</p><div class="heading-line"><h1>The week ahead.</h1><button class="today-pill" data-action="today">This week</button></div><p class="muted" style="font-size:13px;margin-top:10px">${weekEvents.length} sessions · ${esc(zoneLabel())}</p></div><div class="week-controls"><button class="icon-button" data-action="shift-week" data-value="-7" aria-label="Previous week">${icon("left")}</button><strong>${esc(dateText(start, { month: "short", day: "numeric" }))} – ${esc(dateText(end, { month: "short", day: "numeric" }))}</strong><button class="icon-button" data-action="shift-week" data-value="7" aria-label="Next week">${icon("right")}</button></div>${Array.from(
     { length: 7 },
     (_, i) => {
       const d = addDays(start, i),
@@ -460,9 +481,10 @@ function courseRows() {
     : '<p class="notice">No matching subjects.</p>';
 }
 function renderTimetable() {
-  return `<main><div class="heading"><p class="eyebrow">A PLACE FOR EVERYTHING</p><h1 style="margin-top:8px">Your timetable.</h1></div><section class="summary-panel"><div class="file-mark">${icon("calendar")}</div><h2>${esc(schedule.name.replace(/^Class Calendar\s*-?\s*/i, ""))}</h2><p>${esc(dateText(schedule.first, { month: "short", day: "numeric" }))} – ${esc(dateText(schedule.last, { month: "short", day: "numeric", year: "numeric" }))}</p><div class="stats"><div class="stat"><strong>${courseTitles().length}</strong><span>SUBJECTS</span></div><div class="stat"><strong>${schedule.events.length}</strong><span>SESSIONS</span></div></div><button class="primary" data-action="import">${icon("upload")}Import updated calendar</button><p style="text-align:center;margin-top:13px;font-size:10px">Imported ${esc(new Intl.DateTimeFormat("en-CA", { timeZone: E.ZONE, month: "short", day: "numeric" }).format(new Date(schedule.importedAt)))} · Saved on this phone</p></section><div class="section-head"><h2>Your subjects</h2><small>${courseTitles().length} total</small></div><label class="search">${icon("search")}<input id="course-search" type="search" placeholder="Find a subject" aria-label="Find a subject" value="${esc(search)}"></label><div id="course-list">${courseRows()}</div><p class="notice">Calendar times stay in Calgary time, even when you travel. Changes at university appear here after you import a fresh calendar.${schedule.bounded ? " Open-ended events are included for two years." : ""}</p><button class="secondary" data-action="help">${icon("info")}How to update your timetable</button></main>`;
+  return `<main><div class="heading"><p class="eyebrow">A PLACE FOR EVERYTHING</p><h1 style="margin-top:8px">Your timetable.</h1></div><section class="summary-panel"><div class="file-mark">${icon("calendar")}</div><h2>${esc(schedule.name.replace(/^Class Calendar\s*-?\s*/i, ""))}</h2><p>${esc(dateText(schedule.first, { month: "short", day: "numeric" }))} – ${esc(dateText(schedule.last, { month: "short", day: "numeric", year: "numeric" }))}</p><div class="stats"><div class="stat"><strong>${courseTitles().length}</strong><span>SUBJECTS</span></div><div class="stat"><strong>${schedule.events.length}</strong><span>SESSIONS</span></div></div><button class="primary" data-action="import">${icon("upload")}Import updated calendar</button><p style="text-align:center;margin-top:13px;font-size:10px">Imported ${esc(new Intl.DateTimeFormat("en-CA", { timeZone: E.formatZone(schedule.importedAt, displayZone), month: "short", day: "numeric" }).format(new Date(schedule.importedAt)))} · Saved on this phone</p></section><div class="section-head"><h2>Your subjects</h2><small>${courseTitles().length} total</small></div><label class="search">${icon("search")}<input id="course-search" type="search" placeholder="Find a subject" aria-label="Find a subject" value="${esc(search)}"></label><div id="course-list">${courseRows()}</div><p class="notice">Times shown in ${esc(zoneLabel())}. Change the time zone in Settings. Changes at university appear here after you import a fresh calendar.${schedule.bounded ? " Open-ended events are included for two years." : ""}</p><button class="secondary" data-action="help">${icon("info")}How to update your timetable</button></main>`;
 }
 function showSheet(title, body) {
+  refreshSheet = null;
   const dialog = $("#sheet");
   previousFocus = document.activeElement;
   dialog.innerHTML = `<div class="sheet-handle"></div><div class="sheet-head"><h2 id="sheet-title">${esc(title)}</h2><button class="icon-button" data-action="close" aria-label="Close">${icon("close")}</button></div>${body}`;
@@ -470,24 +492,42 @@ function showSheet(title, body) {
   dialog.scrollTop = 0;
 }
 function closeSheet() {
+  refreshSheet = null;
   if ($("#sheet").open) $("#sheet").close();
   $("#sheet").innerHTML = "";
   pending = null;
   if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
 }
+function timeZoneSettings() {
+  const manualZone = ScheduleTime.validZone(prefs.timeZone)
+    ? prefs.timeZone
+    : E.ZONE;
+  return `<div class="settings-row"><div><strong>Use phone time zone</strong><p>Follow this phone when you travel</p></div><button class="switch ${prefs.usePhoneZone ? "on" : ""}" role="switch" aria-checked="${!!prefs.usePhoneZone}" aria-label="Use phone time zone" data-action="phone-zone"></button></div><label class="edit-field">Manual time zone<select id="time-zone" aria-label="Manual time zone" ${prefs.usePhoneZone ? "disabled" : ""}>${ScheduleTime.zones(
+    manualZone,
+  )
+    .map(
+      (zone) =>
+        `<option value="${esc(zone)}" ${zone === manualZone ? "selected" : ""}>${esc(ScheduleTime.label(zone))}</option>`,
+    )
+    .join(
+      "",
+    )}</select></label><p class="notice">Showing ${esc(zoneLabel())}. The clock and countdowns use your phone’s current time. All-day events and UCalgary holidays keep their calendar dates.</p>`;
+}
 function settingsSheet() {
   showSheet(
     "Make it yours",
-    `<p class="eyebrow" style="margin-top:22px">APPEARANCE</p><div class="segmented" role="group" aria-label="Appearance">${["light", "dark", "system"].map((t) => `<button class="${prefs.theme === t ? "selected" : ""}" data-action="theme" data-value="${t}" aria-pressed="${prefs.theme === t}">${t[0].toUpperCase() + t.slice(1)}</button>`).join("")}</div>${accentPicker()}<div class="settings-row"><div><strong>24-hour time</strong><p>Use 14:00 instead of 2:00 PM</p></div><button class="switch ${prefs.hour24 ? "on" : ""}" role="switch" aria-checked="${prefs.hour24}" aria-label="24-hour time" data-action="time-format"></button></div><div class="settings-row"><div><strong>Campus time zone</strong><p>Calgary · Mountain Time</p></div>${icon("pin")}</div><p class="notice">Your timetable stays on this phone. After each import, the app checks UCalgary’s public calendar for holiday and break dates. Saved dates work offline; no timetable data is uploaded.</p>${academicStatus()}<button class="secondary" data-action="help">${icon("info")}Calendar import help</button>${schedule ? '<button class="danger" data-action="remove-confirm">Remove imported timetable</button>' : ""}<p class="privacy-line">Campus Day 1.2 · Independently made for campus life</p>`,
+    `<p class="eyebrow" style="margin-top:22px">APPEARANCE</p><div class="segmented" role="group" aria-label="Appearance">${["light", "dark", "system"].map((t) => `<button class="${prefs.theme === t ? "selected" : ""}" data-action="theme" data-value="${t}" aria-pressed="${prefs.theme === t}">${t[0].toUpperCase() + t.slice(1)}</button>`).join("")}</div>${accentPicker()}<div class="settings-row"><div><strong>24-hour time</strong><p>Use 14:00 instead of 2:00 PM</p></div><button class="switch ${prefs.hour24 ? "on" : ""}" role="switch" aria-checked="${prefs.hour24}" aria-label="24-hour time" data-action="time-format"></button></div>${timeZoneSettings()}<p class="notice">Your timetable stays on this phone. After each import, the app checks UCalgary’s public calendar for holiday and break dates. Saved dates work offline; no timetable data is uploaded.</p>${academicStatus()}<button class="secondary" data-action="help">${icon("info")}Calendar import help</button>${schedule ? '<button class="danger" data-action="remove-confirm">Remove imported timetable</button>' : ""}<p class="privacy-line">Campus Day 1.2 · Independently made for campus life</p>`,
   );
+  refreshSheet = settingsSheet;
 }
 function detailSheet(id) {
   const e = schedule.events.find((e) => e.id === id);
   if (!e) return;
   showSheet(
     "Class details",
-    `${codeLabel(e)}<div class="detail-title" style="color:${color(e.title)}">${esc(nameOf(e))}</div><p class="session-badge">${esc(typeLabel(e))}</p><div class="detail-item">${icon("book")}<div><strong>${esc(sessionInfo(e).instructor || "Instructor not added")}</strong><p>Instructor / teaching staff</p></div></div><div class="detail-item">${icon("calendar")}<div><strong>${esc(dateText(e.day, { weekday: "long", month: "long", day: "numeric" }))}</strong><p>${esc(dateText(e.day, { year: "numeric" }))}</p></div></div><div class="detail-item">${icon("clock")}<div><strong>${esc(timeRange(e))}</strong><p>${e.allDay ? "All-day event" : esc(duration(e.end - e.start)) + " · Calgary time"}</p></div></div><div class="detail-item">${icon("pin")}<div><strong>${esc(room(e.location))}</strong><p>${esc(e.location)}</p></div></div><button class="primary" style="margin-top:22px" data-action="view-day" data-value="${e.day}">View this day${icon("arrow")}</button><button class="secondary" style="margin-top:10px" data-action="subject" data-value="${esc(e.title)}">Subject details</button>`,
+    `${codeLabel(e)}<div class="detail-title" style="color:${color(e.title)}">${esc(nameOf(e))}</div><p class="session-badge">${esc(typeLabel(e))}</p><div class="detail-item">${icon("book")}<div><strong>${esc(sessionInfo(e).instructor || "Instructor not added")}</strong><p>Instructor / teaching staff</p></div></div><div class="detail-item">${icon("calendar")}<div><strong>${esc(dateText(e.day, { weekday: "long", month: "long", day: "numeric" }))}</strong><p>${esc(dateText(e.day, { year: "numeric" }))}</p></div></div><div class="detail-item">${icon("clock")}<div><strong>${esc(timeRange(e))}</strong><p>${e.allDay ? "All-day event" : esc(duration(e.end - e.start)) + " · " + esc(zoneLabel())}</p></div></div><div class="detail-item">${icon("pin")}<div><strong>${esc(room(e.location))}</strong><p>${esc(e.location)}</p></div></div><button class="primary" style="margin-top:22px" data-action="view-day" data-value="${e.day}">View this day${icon("arrow")}</button><button class="secondary" style="margin-top:10px" data-action="subject" data-value="${esc(e.title)}">Subject details</button>`,
   );
+  refreshSheet = () => detailSheet(id);
 }
 function helpSheet() {
   showSheet(
@@ -514,14 +554,15 @@ window.receiveCalendar = (text, filename) => {
   setTimeout(() => {
     try {
       pending = E.parse(text, filename);
+      const preview = ScheduleTime.project(pending, displayZone);
       showSheet(
         schedule ? "Update your timetable?" : "Your timetable is ready",
-        `<p class="sheet-subtitle">${schedule ? "This will replace your current timetable. Your appearance settings stay the same." : "Your semester, neatly in place. Check the details below, then make it yours."}</p><div class="import-summary"><h3>${esc(pending.name)}</h3><p>${pending.courses.length} subjects · ${pending.events.length} class sessions</p><p>${esc(dateText(pending.first))} – ${esc(dateText(pending.last, { month: "long", day: "numeric", year: "numeric" }))}</p></div><div class="import-courses">${pending.courses
+        `<p class="sheet-subtitle">${schedule ? "This will replace your current timetable. Your appearance settings stay the same." : "Your semester, neatly in place. Check the details below, then make it yours."}</p><div class="import-summary"><h3>${esc(pending.name)}</h3><p>${pending.courses.length} subjects · ${pending.events.length} class sessions</p><p>${esc(dateText(preview.first))} – ${esc(dateText(preview.last, { month: "long", day: "numeric", year: "numeric" }))}</p></div><div class="import-courses">${pending.courses
           .slice(0, 12)
           .map((c) => `<span>${icon("check")}${esc(c)}</span>`)
           .join(
             "",
-          )}</div>${pending.bounded ? '<p class="notice">This calendar has no end date. The next two years of repeating events are included.</p>' : ""}<p class="privacy-line">${icon("shield")}Saved only on this phone · Calgary time</p><button class="primary" data-action="confirm-import">${schedule ? "Replace timetable" : "Let’s see my day"}${icon("arrow")}</button>`,
+          )}</div>${pending.bounded ? '<p class="notice">This calendar has no end date. The next two years of repeating events are included.</p>' : ""}<p class="privacy-line">${icon("shield")}Saved only on this phone · Times shown in ${esc(zoneLabel())}</p><button class="primary" data-action="confirm-import">${schedule ? "Replace timetable" : "Let’s see my day"}${icon("arrow")}</button>`,
       );
     } catch (e) {
       pending = null;
@@ -544,9 +585,10 @@ function confirmImport() {
     );
     return;
   }
-  schedule = value;
+  importedSchedule = value;
+  schedule = ScheduleTime.project(importedSchedule, displayZone);
   followDefaultDay = true;
-  selected = DayDefault.defaultDay(schedule);
+  selected = defaultDay();
   tab = "day";
   search = "";
   closeSheet();
@@ -561,10 +603,10 @@ window.handleBack = () => {
     closeSheet();
     return true;
   }
-  if (tab !== "day" || selected !== DayDefault.defaultDay(schedule)) {
+  if (tab !== "day" || selected !== defaultDay()) {
     tab = "day";
     followDefaultDay = true;
-    selected = DayDefault.defaultDay(schedule);
+    selected = defaultDay();
     render();
     window.scrollTo(0, 0);
     return true;
@@ -626,6 +668,11 @@ document.addEventListener("click", (event) => {
     savePrefs();
     render();
     settingsSheet();
+  } else if (a === "phone-zone") {
+    prefs.usePhoneZone = !prefs.usePhoneZone;
+    savePrefs();
+    updateTimeZone();
+    settingsSheet();
   } else if (a === "remove-confirm")
     showSheet(
       "Remove your timetable?",
@@ -641,12 +688,20 @@ document.addEventListener("click", (event) => {
       return;
     }
     schedule = null;
+    importedSchedule = null;
     closeSheet();
     render();
     toast("Timetable removed.");
   }
 });
 document.addEventListener("change", (event) => {
+  if (event.target.id === "time-zone") {
+    prefs.timeZone = event.target.value;
+    savePrefs();
+    updateTimeZone();
+    settingsSheet();
+    return;
+  }
   if (
     event.target.id === "date-picker" &&
     /^\d{4}-\d{2}-\d{2}$/.test(event.target.value)
@@ -692,8 +747,11 @@ $("#sheet").addEventListener("click", (event) => {
   }
 });
 window.refreshClock = () => {
-  if (followDefaultDay && !$("#sheet").open)
-    selected = DayDefault.defaultDay(schedule);
+  if (ScheduleTime.resolveZone(prefs) !== displayZone) {
+    updateTimeZone();
+    refreshSheet?.();
+  }
+  if (followDefaultDay && !$("#sheet").open) selected = defaultDay();
   if (
     schedule &&
     tab === "day" &&

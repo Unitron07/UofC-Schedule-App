@@ -2,6 +2,28 @@
   "use strict";
   const ICAL = typeof module !== "undefined" ? require("./ical.js") : root.ICAL;
   const ZONE = "America/Edmonton";
+  const ABT_ZONE = "Etc/GMT+6";
+  const ABT_START = Date.UTC(2026, 10, 1, 8);
+  // Alberta stopped changing clocks on November 1, 2026. Apply the published
+  // rule even when an older WebView or an embedded VTIMEZONE still uses MST.
+  // https://www.alberta.ca/albertas-new-time-system-abt
+  function isAlbertaZone(zone) {
+    return zone === ZONE || zone === "Canada/Mountain";
+  }
+  function formatZone(ms, zone = ZONE) {
+    return isAlbertaZone(zone) && ms >= ABT_START ? ABT_ZONE : zone;
+  }
+  function registerZone(zone) {
+    if (isAlbertaZone(zone.tzid)) {
+      const originalOffset = zone.utcOffset.bind(zone);
+      zone.utcOffset = (t) =>
+        Date.UTC(t.year, t.month - 1, t.day, t.hour || 0) >=
+        Date.UTC(2026, 10, 1, 2)
+          ? -21600
+          : originalOffset(t);
+    }
+    ICAL.TimezoneService.register(zone);
+  }
   const formatter = new Intl.DateTimeFormat("en-CA", {
     timeZone: ZONE,
     year: "numeric",
@@ -11,19 +33,24 @@
     minute: "2-digit",
     hourCycle: "h23",
   });
-  function parts(ms, zone) {
-    const fmt =
-      !zone || zone === ZONE
-        ? formatter
-        : new Intl.DateTimeFormat("en-CA", {
-            timeZone: zone,
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-            hourCycle: "h23",
-          });
+  const formatters = new Map([[ZONE, formatter]]);
+  function parts(ms, zone = ZONE) {
+    zone = formatZone(ms, zone);
+    if (!formatters.has(zone)) {
+      formatters.set(
+        zone,
+        new Intl.DateTimeFormat("en-CA", {
+          timeZone: zone,
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          hourCycle: "h23",
+        }),
+      );
+    }
+    const fmt = formatters.get(zone);
     return Object.fromEntries(
       fmt
         .formatToParts(new Date(ms))
@@ -31,8 +58,8 @@
         .map((p) => [p.type, p.value]),
     );
   }
-  function dateKey(ms) {
-    const p = parts(ms);
+  function dateKey(ms, zone = ZONE) {
+    const p = parts(ms, zone);
     return `${p.year}-${p.month}-${p.day}`;
   }
   function wallToEpoch(t, zone) {
@@ -85,9 +112,10 @@
         "This calendar could not be read. Try downloading a fresh copy from Student Centre.",
       );
     }
-    cal
-      .getAllSubcomponents("vtimezone")
-      .forEach((c) => ICAL.TimezoneService.register(new ICAL.Timezone(c)));
+    cal.getAllSubcomponents("vtimezone").forEach((c) => {
+      const zone = cal.getTimeZoneByID(c.getFirstPropertyValue("tzid"));
+      if (zone) registerZone(zone);
+    });
     const components = cal.getAllSubcomponents("vevent");
     if (!components.length)
       throw new Error(
@@ -121,7 +149,7 @@
             ) -
               wallToEpoch(t, id)) /
             1000;
-          ICAL.TimezoneService.register(zone);
+          registerZone(zone);
         }
       }
     const events = [],
@@ -243,7 +271,17 @@
       bounded,
     };
   }
-  const api = { parse, dateKey, parts, wallToEpoch, ZONE };
+  const api = {
+    parse,
+    dateKey,
+    parts,
+    wallToEpoch,
+    formatZone,
+    isAlbertaZone,
+    ZONE,
+    ABT_ZONE,
+    ABT_START,
+  };
   if (typeof module !== "undefined") module.exports = api;
   else root.CalendarEngine = api;
 })(typeof window !== "undefined" ? window : globalThis);

@@ -894,6 +894,15 @@ small {
   color: var(--muted);
   margin-top: 4px;
 }
+.time-zone-label {
+  color: var(--muted);
+  font-size: 12px;
+  margin: -10px 0 14px;
+  overflow-wrap: anywhere;
+}
+#time-zone:disabled {
+  opacity: 0.55;
+}
 .segmented {
   display: flex;
   background: var(--surface2);

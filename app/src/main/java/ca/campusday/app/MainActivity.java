@@ -23,6 +23,12 @@ public final class MainActivity extends Activity {
     private FrameLayout root;
     private boolean ready = false;
     private Uri pendingUri;
+    private final BroadcastReceiver clockChanges = new BroadcastReceiver() {
+        @Override public void onReceive(Context context, Intent intent) {
+            if (Intent.ACTION_TIMEZONE_CHANGED.equals(intent.getAction())) java.util.TimeZone.setDefault(null);
+            if (ready && web != null) web.evaluateJavascript("window.resumeSchedule && window.resumeSchedule()", null);
+        }
+    };
     private static final String ORIGIN = "https://app.campusday.local/";
     private static final int PICK_CALENDAR = 42;
 
@@ -77,6 +83,12 @@ public final class MainActivity extends Activity {
         });
         web.setWebChromeClient(new WebChromeClient());
         web.loadUrl(ORIGIN);
+        IntentFilter clockFilter = new IntentFilter();
+        clockFilter.addAction(Intent.ACTION_TIME_CHANGED);
+        clockFilter.addAction(Intent.ACTION_TIMEZONE_CHANGED);
+        clockFilter.addAction(Intent.ACTION_DATE_CHANGED);
+        // These protected broadcasts can only be sent by Android itself.
+        registerReceiver(clockChanges, clockFilter);
         handleIntent(getIntent());
     }
     private WebResourceResponse blocked() { return new WebResourceResponse("text/plain", "UTF-8", new ByteArrayInputStream(new byte[0])); }
@@ -142,6 +154,7 @@ public final class MainActivity extends Activity {
         },"calendar-import").start();
     }
     public final class Bridge {
+        @JavascriptInterface public String timeZone() { return java.util.TimeZone.getDefault().getID(); }
         @JavascriptInterface public boolean systemDark() { return (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES; }
         @JavascriptInterface public void importCalendar() {
             runOnUiThread(() -> {
@@ -173,5 +186,5 @@ public final class MainActivity extends Activity {
     @Override public void onBackPressed() { web.evaluateJavascript("window.handleBack()", result -> { if (!"true".equals(result)) super.onBackPressed(); }); }
     @Override protected void onResume() { super.onResume(); if (web != null) { web.onResume(); web.evaluateJavascript("window.resumeSchedule && window.resumeSchedule()",null); } }
     @Override protected void onPause() { if (web != null) web.onPause(); super.onPause(); }
-    @Override protected void onDestroy() { if (web != null) { web.removeJavascriptInterface("Android"); web.destroy(); } super.onDestroy(); }
+    @Override protected void onDestroy() { unregisterReceiver(clockChanges); if (web != null) { web.removeJavascriptInterface("Android"); web.destroy(); } super.onDestroy(); }
 }

@@ -68,12 +68,13 @@ test("Floating times are interpreted in Calgary, independent of device zone", ()
   );
 });
 test("IANA zones without VTIMEZONE preserve local time through DST", () => {
+  // Use a historical transition; future time-zone rules can change in tzdata.
   const s = E.parse(
     wrap(
       event(
         "RRULE:FREQ=WEEKLY;COUNT=3",
-        "DTSTART;TZID=America/Edmonton:20261026T110000",
-        "DTEND;TZID=America/Edmonton:20261026T120000",
+        "DTSTART;TZID=America/Edmonton:20251027T110000",
+        "DTEND;TZID=America/Edmonton:20251027T120000",
       ),
     ),
   );

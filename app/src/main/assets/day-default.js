@@ -4,9 +4,12 @@
     typeof module !== "undefined"
       ? require("./calendar.js")
       : root.CalendarEngine;
-  function defaultDay(schedule, now = Date.now()) {
-    const today = E.dateKey(now);
-    const events = (schedule?.events || []).filter((e) => e.day === today);
+  function defaultDay(schedule, now = Date.now(), zone = E.ZONE) {
+    const today = E.dateKey(now, zone);
+    const events = (schedule?.events || []).filter(
+      (e) =>
+        e.day <= today && (e.endDay || E.dateKey(e.end - 1, zone)) >= today,
+    );
     if (
       !events.length ||
       events.some((e) => !Number.isFinite(e.end) || e.end > now)

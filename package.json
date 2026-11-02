@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "refresh:academic": "node scripts/update-academic-snapshot.cjs",
-    "test": "node --test tests/calendar.test.cjs tests/courses.test.cjs tests/day-academic.test.cjs",
-    "test:ui": "node tests/ui.test.cjs && node tests/day-academic-ui.test.cjs",
+    "test": "node --test tests/calendar.test.cjs tests/courses.test.cjs tests/day-academic.test.cjs tests/schedule-time.test.cjs",
+    "test:ui": "node tests/ui.test.cjs && node tests/day-academic-ui.test.cjs && node tests/time-zone-ui.test.cjs",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
