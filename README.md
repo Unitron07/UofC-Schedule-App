@@ -61,7 +61,7 @@ cd UofC-Schedule-App
 
 On Windows, run `gradlew.bat assembleDebug`. The APK is written to `app/build/outputs/apk/debug/app-debug.apk`. The checked-in wrapper downloads Gradle 8.9 and verifies its SHA-256 checksum; the Android Gradle plugin is pinned to 8.7.3. Internet access is needed for the first build's development dependencies, but not to use the app.
 
-Debug builds use your local Android debug signing key. Release signing keys are deliberately excluded. A build signed with a different key cannot update an installed release; uninstalling first removes its local data. The two published APKs use the same project signing certificate.
+Debug builds use your local Android debug signing key. Release signing keys are deliberately excluded. A build signed with a different key cannot update an installed release; uninstalling first removes its local data. Versions 1.0–1.2 use the original certificate. Version 1.3 starts a new signing key: uninstall an older version before installing 1.3, then re-import your timetable. This removes the older version's saved timetable and preferences. Future releases reuse the 1.3 key stored in GitHub Actions secrets; see [RELEASING.md](RELEASING.md).
 
 For a Windows command-line build without Gradle:
 
