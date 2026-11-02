@@ -14,7 +14,7 @@ _Screenshots show the actual interface in a mobile browser test, using fictional
 
 ## Install
 
-Download **Campus-Day-1.2.apk** from [Releases](https://github.com/Unitron07/UofC-Schedule-App/releases). Open it on your phone and allow installation from the app used to open the download when Android asks. Earlier versions remain available as historical releases.
+Download **Campus-Day-1.3.apk** from [Releases](https://github.com/Unitron07/UofC-Schedule-App/releases). Open it on your phone and allow installation from the app used to open the download when Android asks. Earlier versions remain available as historical releases.
 
 1. In your own browser, sign in to the university portal and download your semester's calendar.
 2. Open Campus Day, tap **Import timetable**, and choose the `.ics` file.
@@ -99,7 +99,7 @@ Browser tests use the fictional fixture and generate screenshots in ignored `tes
 | `tests/`, `examples/`                                  | Portable checks and fictional calendar                         |
 | `.github/workflows/ci.yml`                             | Formatting, parser/UI checks, Android build                    |
 
-See [CONTRIBUTING.md](CONTRIBUTING.md), [PRIVACY.md](PRIVACY.md), and [CHANGELOG.md](CHANGELOG.md). Tags `v1.0.0`, `v1.1.0`, and `v1.2.0` retain source for each APK generation.
+See [CONTRIBUTING.md](CONTRIBUTING.md), [PRIVACY.md](PRIVACY.md), and [CHANGELOG.md](CHANGELOG.md). Tags `v1.0.0`, `v1.1.0`, `v1.2.0`, and `v1.3.0` retain source for each APK generation.
 
 ## Third-party component
 

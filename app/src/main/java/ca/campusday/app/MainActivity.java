@@ -102,7 +102,7 @@ public final class MainActivity extends Activity {
             connection.setReadTimeout(8000);
             connection.setUseCaches(false);
             connection.setRequestProperty("Accept", "text/html");
-            connection.setRequestProperty("User-Agent", "CampusDay/1.2");
+            connection.setRequestProperty("User-Agent", "CampusDay/1.3");
             if (connection.getResponseCode() != 200) throw new IOException("Academic page unavailable");
             ByteArrayOutputStream bytes = new ByteArrayOutputStream();
             long deadline = SystemClock.elapsedRealtime() + 12000;

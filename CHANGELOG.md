@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 1.3 — 2026-11-02
+
+Tag: `v1.3.0`. Android version name: `1.3`; version code: `5`.
 
 ### Added
 
