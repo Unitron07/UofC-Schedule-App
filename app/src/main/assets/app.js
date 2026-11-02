@@ -108,13 +108,7 @@ const defaultDay = () =>
   DayDefault.defaultDay(schedule, Date.now(), displayZone);
 selected = defaultDay();
 const today = () => E.dateKey(Date.now(), displayZone);
-const zoneLabel = () =>
-  displayZone === E.ABT_ZONE ||
-  (E.isAlbertaZone(displayZone) && Date.now() >= E.ABT_START)
-    ? "Calgary · ABT (UTC−6)"
-    : E.isAlbertaZone(displayZone)
-      ? "Calgary time"
-      : displayZone.replaceAll("_", " ");
+const zoneLabel = () => ScheduleTime.label(displayZone);
 function updateTimeZone() {
   displayZone = ScheduleTime.resolveZone(prefs);
   schedule = ScheduleTime.project(importedSchedule, displayZone);
@@ -513,7 +507,7 @@ function timeZoneSettings() {
   )
     .map(
       (zone) =>
-        `<option value="${esc(zone)}" ${zone === manualZone ? "selected" : ""}>${esc(zone === E.ZONE ? "Calgary · Alberta Time (ABT)" : zone === E.ABT_ZONE ? "ABT · UTC−6 year-round" : zone.replaceAll("_", " "))}</option>`,
+        `<option value="${esc(zone)}" ${zone === manualZone ? "selected" : ""}>${esc(ScheduleTime.label(zone))}</option>`,
     )
     .join(
       "",

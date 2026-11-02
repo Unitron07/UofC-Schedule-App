@@ -94,6 +94,26 @@ test("The zone picker includes Calgary, UTC, the saved zone, and an older-WebVie
     Intl.supportedValuesOf = supported;
   }
 });
+test("Time-zone labels consistently include a name and current UTC offset", () => {
+  const winter = Date.parse("2027-01-10T16:00:00Z"),
+    summer = Date.parse("2027-07-10T16:00:00Z");
+  assert.equal(T.label(E.ABT_ZONE, winter), "ABT UTC−6");
+  assert.equal(T.label(E.ZONE, winter), "Calgary · ABT UTC−6");
+  assert.equal(T.label("UTC", winter), "UTC+0");
+  assert.equal(T.label("Asia/Kolkata", winter), "Asia/Kolkata · UTC+5:30");
+  assert.equal(
+    T.label("America/New_York", winter),
+    "America/New York · EST UTC−5",
+  );
+  assert.equal(
+    T.label("America/New_York", summer),
+    "America/New York · EDT UTC−4",
+  );
+  for (const zone of T.zones(E.ZONE)) {
+    assert.match(T.label(zone, winter), /UTC[+−]\d{1,2}(:\d{2})?$/);
+    assert.doesNotMatch(T.label(zone, winter), /year.round/);
+  }
+});
 test("ABT stays at UTC−6 after November 2026, including on a WebView with old Alberta rules", () => {
   const filename = require.resolve("../app/src/main/assets/calendar.js");
   class OldDateTimeFormat extends Intl.DateTimeFormat {

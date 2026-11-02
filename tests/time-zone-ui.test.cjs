@@ -83,7 +83,7 @@ const server = http.createServer((req, res) => {
     await page.getByRole("button", { name: "Close", exact: true }).click();
     assert.match(await page.locator(".hero-meta").innerText(), /11:30 PM/);
     await page.reload();
-    assert.equal(await page.locator(".time-zone-label").innerText(), "UTC");
+    assert.equal(await page.locator(".time-zone-label").innerText(), "UTC+0");
     await page.getByRole("button", { name: "Settings", exact: true }).click();
     await phoneSwitch.click();
     assert.equal(
@@ -169,7 +169,7 @@ const server = http.createServer((req, res) => {
       saved,
     );
     await page.reload();
-    assert.equal(await page.locator(".time-zone-label").innerText(), "UTC");
+    assert.equal(await page.locator(".time-zone-label").innerText(), "UTC+0");
     await page.getByRole("button", { name: "Settings", exact: true }).click();
     for (const viewport of [
       { width: 320, height: 640 },
@@ -199,7 +199,7 @@ const server = http.createServer((req, res) => {
     await page.reload();
     assert.equal(
       await page.locator(".time-zone-label").innerText(),
-      "Calgary time",
+      "Calgary · MDT UTC−6",
     );
     await page.setViewportSize({ width: 360, height: 780 });
     await page.clock.setFixedTime(new Date("2027-01-10T16:00:00Z"));
@@ -223,7 +223,7 @@ const server = http.createServer((req, res) => {
     await page.reload();
     assert.equal(
       await page.locator(".time-zone-label").innerText(),
-      "Calgary · ABT (UTC−6)",
+      "Calgary · ABT UTC−6",
     );
     assert.match(await page.locator(".hero-meta").innerText(), /11:30/);
     await page.getByRole("button", { name: "Settings", exact: true }).click();
@@ -242,7 +242,7 @@ const server = http.createServer((req, res) => {
       };
     });
     await phoneSwitch.click();
-    assert.match(await page.locator("#sheet").innerText(), /ABT \(UTC−6\)/);
+    assert.match(await page.locator("#sheet").innerText(), /ABT UTC−6/);
     await page.screenshot({ path: path.join(out, "time-zone-settings.png") });
     assert.deepEqual(errors, []);
     console.log(

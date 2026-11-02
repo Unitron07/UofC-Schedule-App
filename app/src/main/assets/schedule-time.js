@@ -53,6 +53,31 @@
       .filter(validZone)
       .sort();
   }
+  function label(zone, now = Date.now()) {
+    if (zone === E.ABT_ZONE) return "ABT UTC−6";
+    const p = E.parts(now, zone);
+    const offset = Math.round(
+      (Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute) -
+        Math.floor(now / 60000) * 60000) /
+        60000,
+    );
+    const minutes = Math.abs(offset);
+    const utc = `UTC${offset < 0 ? "−" : "+"}${Math.floor(minutes / 60)}${minutes % 60 ? ":" + String(minutes % 60).padStart(2, "0") : ""}`;
+    if (zone === "UTC") return utc;
+    const abt = E.isAlbertaZone(zone) && now >= E.ABT_START;
+    const short = abt
+      ? "ABT"
+      : new Intl.DateTimeFormat("en-US", {
+          timeZone: E.formatZone(now, zone),
+          timeZoneName: "short",
+        })
+          .formatToParts(new Date(now))
+          .find((part) => part.type === "timeZoneName")?.value;
+    const abbreviation =
+      short && !/^(GMT|UTC)([+−-]|$)/.test(short) ? short + " " : "";
+    const name = E.isAlbertaZone(zone) ? "Calgary" : zone.replaceAll("_", " ");
+    return `${name} · ${abbreviation}${utc}`;
+  }
   function midnight(day, zone) {
     const [year, month, date] = day.split("-").map(Number);
     return E.wallToEpoch({ year, month, day: date }, zone);
@@ -90,7 +115,7 @@
       ),
     };
   }
-  const api = { validZone, deviceZone, resolveZone, zones, project };
+  const api = { validZone, deviceZone, resolveZone, zones, label, project };
   if (typeof module !== "undefined") module.exports = api;
   else root.ScheduleTime = api;
 })(typeof window !== "undefined" ? window : globalThis);
